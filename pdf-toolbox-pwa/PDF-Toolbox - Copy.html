@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PDF Toolbox</title>
+<script>var _t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',_t);</script>
+<style>
+:root{color-scheme:dark;--bg:#0a0a0a;--bg2:#1a1a1a;--bg3:#2a2a2a;--tx:#ffffff;--tx2:#888888;--ac:#ff4444;--ac2:#cc0000;--ok:#00c853;--er:#ff1744;--wa:#ffab00;--bd:#333333;--r:16px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+[data-theme="light"]{color-scheme:light;--bg:#f5f5f5;--bg2:#ffffff;--bg3:#e8e8e8;--tx:#1a1a1a;--tx2:#666666;--bd:#e0e0e0;--ac:#ff0000;--ac2:#cc0000}
+html{background:var(--bg);-webkit-text-size-adjust:100%;overflow:hidden}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--tx);height:100vh;height:100dvh;overflow:hidden;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column}
+
+/* SPLASH */
+.splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);transition:opacity .5s ease,visibility .5s ease}
+.splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+.sp-logo{width:110px;height:110px;border-radius:26px;background:linear-gradient(135deg,#ff0000 0%,#ff4444 50%,#ff6666 100%);display:flex;align-items:center;justify-content:center;margin-bottom:22px;box-shadow:0 8px 40px rgba(255,0,0,.45),inset 0 1px 0 rgba(255,255,255,.15);animation:spIn .6s cubic-bezier(.4,0,.2,1)}
+.sp-logo span{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;text-shadow:0 2px 8px rgba(0,0,0,.2)}
+.sp-title{font-size:26px;font-weight:800;color:var(--tx);margin-bottom:6px;letter-spacing:-.5px;animation:spIn .6s cubic-bezier(.4,0,.2,1) .1s both}
+.sp-sub{font-size:13px;color:var(--tx2);animation:spIn .6s cubic-bezier(.4,0,.2,1) .2s both}
+.sp-by{font-size:11px;color:var(--tx2);margin-top:6px;animation:spIn .6s cubic-bezier(.4,0,.2,1) .25s both}
+.sp-bar{width:140px;height:3px;background:var(--bd);border-radius:2px;margin-top:32px;overflow:hidden;animation:spIn .6s cubic-bezier(.4,0,.2,1) .3s both}
+.sp-bar-fill{height:100%;width:40%;background:linear-gradient(90deg,#ff0000,#ff4444);border-radius:2px;animation:spSlide 1.2s ease infinite}
+@keyframes spIn{from{opacity:0;transform:translateY(16px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes spSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:calc(18px + var(--st)) 16px 14px 16px;background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+.hdr h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.tbtn{background:none;border:none;font-size:20px;cursor:pointer;padding:8px;border-radius:10px;color:var(--tx);transition:all .15s}
+.tbtn:active{background:var(--bg3);transform:scale(.9)}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+.sec{display:none;flex-direction:column;overflow:hidden;height:100%}.sec.on{display:flex;animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sec-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.sh{margin-bottom:18px;display:flex;align-items:center;gap:12px}.sh .si{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sh .si svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sh h2{font-size:20px;font-weight:700;margin-bottom:1px}
+.sd{color:var(--tx2);font-size:13px}
+.si-red{background:linear-gradient(135deg,#ff0000,#ff4444);box-shadow:0 4px 12px rgba(255,0,0,.3)}
+.si-orange{background:linear-gradient(135deg,#ff6600,#ffaa00);box-shadow:0 4px 12px rgba(255,102,0,.3)}
+.si-blue{background:linear-gradient(135deg,#3b82f6,#60a5fa);box-shadow:0 4px 12px rgba(59,130,246,.3)}
+.si-green{background:linear-gradient(135deg,#00c853,#69f0ae);box-shadow:0 4px 12px rgba(0,200,83,.3)}
+.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa);box-shadow:0 4px 12px rgba(139,92,246,.3)}
+.si-pink{background:linear-gradient(135deg,#ec4899,#f472b6);box-shadow:0 4px 12px rgba(236,72,153,.3)}
+.dz{position:relative;border:2px dashed var(--bd);border-radius:20px;padding:36px 20px;text-align:center;background:var(--bg2);transition:all .25s;overflow:hidden}
+.dz.dragover{border-color:var(--ac);background:rgba(255,68,68,.06);box-shadow:inset 0 0 30px rgba(255,68,68,.05)}
+.dz:active{transform:scale(.98)}
+.di{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;background:linear-gradient(135deg,rgba(255,68,68,.1),rgba(255,68,68,.03));display:flex;align-items:center;justify-content:center;pointer-events:none;transition:all .25s}
+.di svg{width:32px;height:32px;color:var(--ac);opacity:.7}
+.dz p{font-size:15px;margin-bottom:4px;pointer-events:none;font-weight:600;color:var(--tx)}
+.dh{color:var(--tx2);font-size:12px!important;pointer-events:none}
+.dz input[type=file]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;-webkit-appearance:none;appearance:none;border:none;background:none}
+.fl{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.fi{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bd);transition:all .15s}
+.fi:active{transform:scale(.98);background:var(--bg3)}
+.fi .ic{font-size:22px}.fi .dt{flex:1;min-width:0}
+.fi .nm{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi .mt{display:block;font-size:11px;color:var(--tx2)}
+.fi .rm{background:rgba(255,23,68,.08);border:none;font-size:14px;color:var(--er);cursor:pointer;padding:8px;border-radius:8px;transition:all .15s}
+.fi .rm:active{background:rgba(255,23,68,.2);transform:scale(.9)}
+.fi .draghandle{color:var(--tx2);font-size:14px;cursor:grab;padding:2px 4px;opacity:.5;transition:opacity .15s}
+.fi .draghandle:active{opacity:1}
+.fi.dragging{opacity:.5;border-color:var(--ac);box-shadow:0 4px 12px rgba(255,68,68,.1)}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px}
+.pc{position:relative;background:var(--bg2);border-radius:var(--r);border:2px solid var(--bd);overflow:hidden;cursor:pointer;transition:all .2s}
+.pc:active{transform:scale(.95)}
+.pc.selected{border-color:var(--ac);box-shadow:0 0 0 3px rgba(255,68,68,.2),0 4px 12px rgba(255,68,68,.1)}
+.pc canvas{width:100%;height:auto;display:block}
+.pc .pn{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:600;backdrop-filter:blur(4px)}
+.pc .ck{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#ff0000,#ff3333);display:none;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;box-shadow:0 3px 8px rgba(255,0,0,.4)}
+.pc.selected .ck{display:flex}
+.fi2{margin-top:14px}
+.fc{display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bd)}
+.fc .ic{font-size:32px}.fc .dt{flex:1}
+.fc .nm{display:block;font-weight:600;font-size:15px;margin-bottom:3px}
+.fc .st{display:block;font-size:12px;font-weight:500}
+.st.locked{color:var(--er)}.st.unlocked{color:var(--ok)}
+.pig{display:flex;gap:8px;margin-top:12px}
+.pwinput{flex:1;padding:14px;font-size:15px;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg2);color:var(--tx);outline:none;transition:border-color .2s}
+.pwinput:focus{border-color:var(--ac)}
+.bi{width:48px;height:48px;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg2);color:var(--tx);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.bi:active{background:var(--bg3);transform:scale(.95)}
+.pr{margin-top:14px}
+.sr{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.sr label{font-size:13px;color:var(--tx2)}
+.selinput{padding:7px 10px;font-size:13px;border:1px solid var(--bd);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none}
+.pp{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:7px}
+.pp canvas{width:100%;height:auto;border-radius:6px;border:1px solid var(--bd)}
+.ab{display:flex;gap:10px;padding:14px 16px 10px;border-top:1px solid var(--bd);flex-shrink:0;background:var(--bg2)}
+.ab2{display:flex;gap:8px;padding:12px 16px 0;flex-shrink:0}
+.btn{flex:1;min-width:0;padding:15px 18px;font-size:15px;font-weight:700;border:none;border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn:active:not(:disabled){transform:scale(.96)}
+.bp{background:linear-gradient(135deg,#ff0000 0%,#ff3333 50%,#ff4444 100%);color:#fff;box-shadow:0 4px 20px rgba(255,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15)}.bp:active:not(:disabled){background:linear-gradient(135deg,#cc0000,#ff0000);box-shadow:0 2px 8px rgba(255,0,0,.2)}
+.bs{background:transparent;color:var(--tx2);border:1.5px solid var(--bd);backdrop-filter:blur(4px)}.bs:active:not(:disabled){background:var(--bg3);border-color:#ff4444;color:#ff4444}
+.bsave{background:var(--ok);color:#fff}.bsave:active:not(:disabled){background:#16a34a}
+.bshare{background:#8b5cf6;color:#fff}.bshare:active:not(:disabled){background:#7c3aed}
+.ic-btn{width:48px;height:48px;min-width:48px;border:1.5px solid var(--bd);border-radius:14px;background:var(--bg2);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.ic-btn.off{opacity:.25;pointer-events:none}
+.ic-btn:active{transform:scale(.9);background:rgba(255,68,68,.1);border-color:#ff4444;color:#ff4444;box-shadow:0 2px 16px rgba(255,0,0,.15)}
+.bnav{display:flex;justify-content:space-around;padding:8px 4px 10px;background:var(--bg2);border-top:1px solid var(--bd);flex-shrink:0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.nb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 6px;background:none;border:none;color:var(--tx2);font-size:9px;cursor:pointer;min-width:44px;transition:all .2s;border-radius:12px}
+.nb.on{color:#fff;background:linear-gradient(135deg,#ff0000,#ff3333);box-shadow:0 4px 12px rgba(255,0,0,.3)}
+.nb:active{transform:scale(.9)}
+.ni{font-size:20px}.nl{font-weight:600;letter-spacing:-.2px}
+.lo{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.ls{width:48px;height:48px;border:4px solid var(--bg3);border-top-color:var(--ac);border-radius:50%;animation:sp 1s linear infinite;margin-bottom:16px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lo p{color:#fff;font-size:15px;font-weight:500}
+.toast-wrap{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:1001;pointer-events:none}
+.toast{padding:16px 32px;border-radius:14px;font-size:14px;font-weight:600;animation:su .3s ease;max-width:88%;text-align:center;pointer-events:auto;margin-top:20px;box-shadow:0 8px 32px rgba(0,0,0,.25);backdrop-filter:blur(8px)}
+@keyframes su{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.toast.success{background:var(--ok);color:#fff}
+.toast.error{background:var(--er);color:#fff}
+.toast.warning{background:var(--wa);color:#0f172a}
+.toast.info{background:var(--ac);color:#fff}
+.hidden{display:none!important}
+.mi-grid{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.mi-item{position:relative;width:calc(33.33% - 7px);aspect-ratio:1;border-radius:var(--r);overflow:hidden;border:2px solid var(--bd);transition:all .15s}
+.mi-item:active{transform:scale(.95)}
+.mi-item img{width:100%;height:100%;object-fit:cover;display:block}
+.mi-item .mi-rm{position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ff1744,#ff4444);color:#fff;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 3px 10px rgba(255,0,0,.4);transition:all .15s}
+.mi-item .mi-rm:active{transform:scale(.85)}
+.mi-cfg{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+@media(min-width:700px){.main{max-width:560px;margin:0 auto}.bnav{max-width:500px;margin:0 auto;border-radius:var(--r) var(--r) 0 0}.pg{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="sp-logo"><span>pdftool</span></div>
+  <div class="sp-title">PDF Toolbox</div>
+  <div class="sp-sub">Merge, Split, Convert & More</div>
+  <div class="sp-by">by odx</div>
+  <div class="sp-bar"><div class="sp-bar-fill"></div></div>
+</div>
+
+<header class="hdr">
+  <h1>PDF Toolbox</h1>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="tbtn" id="resetBtn" title="Reset All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+    <button class="tbtn" id="themeBtn"><span id="themeIcon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
+  </div>
+</header>
+
+<main class="main">
+
+  <section id="secMerge" class="sec on">
+    <div class="sec-body">
+    <div class="sh"><span class="si si-red"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="14" height="18" rx="2"/><path d="M16 9h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4"/></svg></span><div><h2>Merge PDF</h2><p class="sd">Combine multiple PDF files into one</p></div></div>
+    <div class="dz" id="dropMerge"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div><p>Drop PDF files here</p><p class="dh">or tap to select</p><input type="file" id="fileMerge" accept=".pdf" multiple></div>
+    <div id="listMerge" class="fl"></div>
+    </div>
+    <div class="ab2"><button class="ic-btn off" id="shareMerge" title="Share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
+    <div class="ab"><button class="btn bs" id="clearMerge" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 12 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Clear All</button><button class="btn bp" id="btnMerge" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="14" height="18" rx="2"/><path d="M16 9h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4"/></svg>Merge PDFs</button></div>
+  </section>
+
+  <section id="secSplit" class="sec">
+    <div class="sec-body">
+    <div class="sh"><span class="si si-orange"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.59" y2="13.51"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.59" y1="10.49" x2="14.47" y2="14.48"/></svg></span><div><h2>Split PDF</h2><p class="sd">Extract specific pages from a PDF</p></div></div>
+    <div class="dz" id="dropSplit"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></div><p>Drop a PDF here</p><p class="dh">or tap to select</p><input type="file" id="fileSplit" accept=".pdf"></div>
+    <div id="pagesSplit" class="pg"></div>
+    </div>
+    <div class="ab2"><button class="ic-btn off" id="shareSplit" title="Share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
+    <div class="ab"><button class="btn bs" id="btnSelectAll" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Select All</button><button class="btn bp" id="btnExtract" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.59" y2="13.51"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.59" y1="10.49" x2="14.47" y2="14.48"/></svg>Extract Pages</button></div>
+  </section>
+
+  <section id="secUnlock" class="sec">
+    <div class="sec-body">
+    <div class="sh"><span class="si si-green"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span><div><h2>Remove Password</h2><p class="sd">Remove password protection from a PDF</p></div></div>
+    <div class="dz" id="dropUnlock"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><p>Drop a protected PDF</p><p class="dh">or tap to select</p><input type="file" id="fileUnlock" accept=".pdf"></div>
+    <div id="infoUnlock" class="fi2 hidden">
+      <div class="fc"><span class="ic"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div class="dt"><span class="nm" id="nameUnlock"></span><span class="st" id="statusUnlock"></span></div></div>
+      <div class="pig"><input type="password" class="pwinput" id="passInput" placeholder="Enter password"><button class="bi" id="togglePass"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+    </div>
+    </div>
+    <div class="ab2"><button class="ic-btn off" id="shareUnlock" title="Share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
+    <div class="ab"><button class="btn bp" id="btnUnlock" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Remove Password</button></div>
+  </section>
+
+  <section id="secPdf2Img" class="sec">
+    <div class="sec-body">
+    <div class="sh"><span class="si si-blue"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><div><h2>PDF to Images</h2><p class="sd">Convert PDF pages to image files</p></div></div>
+    <div class="dz" id="dropPdf2Img"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><p>Drop a PDF here</p><p class="dh">or tap to select</p><input type="file" id="filePdf2Img" accept=".pdf"></div>
+    <div id="settingsPdf2Img" class="pr hidden">
+      <div class="sr"><label>Format:</label><select class="selinput" id="fmtImg"><option value="png">PNG</option><option value="jpeg">JPEG</option></select><label>Quality:</label><select class="selinput" id="qualImg"><option value="0.9">High</option><option value="0.7">Medium</option><option value="0.5">Low</option></select></div>
+      <div class="ab2"><button class="btn bs" id="btnSelAllPdf2Img" style="flex:none;padding:10px 16px;font-size:13px">Select All</button><button class="btn bs" id="btnDeselAllPdf2Img" style="flex:none;padding:10px 16px;font-size:13px">Deselect All</button><span id="pdf2imgCount" style="font-size:13px;color:var(--tx2);margin-left:8px;align-self:center"></span></div>
+      <div id="previewPdf2Img" class="pg"></div>
+    </div>
+    </div>
+    <div class="ab2"><button class="ic-btn off" id="sharePdf2Img" title="Share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
+    <div class="ab"><button class="btn bs" id="clearPdf2Img" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 12 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Clear All</button><button class="btn bp" id="btnPdf2Img" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Convert to Images</button></div>
+  </section>
+
+  <section id="secImg2Pdf" class="sec">
+    <div class="sec-body">
+    <div class="sh"><span class="si si-purple"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="8" y="13" width="8" height="5" rx="1"/><path d="M10 16l2-3 2 3"/></svg></span><div><h2>Images to PDF</h2><p class="sd">Create a PDF from image files</p></div></div>
+    <div class="dz" id="dropImg2Pdf"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><p>Drop images here</p><p class="dh">or tap to select</p><input type="file" id="fileImg2Pdf" accept="image/*" multiple></div>
+    <div id="listImg2Pdf" class="fl"></div>
+    </div>
+    <div class="ab2"><button class="ic-btn off" id="shareImg2Pdf" title="Share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
+    <div class="ab"><button class="btn bs" id="clearImg2Pdf" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 12 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Clear All</button><button class="btn bp" id="btnImg2Pdf" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="8" y="13" width="8" height="5" rx="1"/><path d="M10 16l2-3 2 3"/></svg>Create PDF</button></div>
+  </section>
+
+  <section id="secMergeImg" class="sec">
+    <div class="sec-body">
+    <div class="sh"><span class="si si-pink"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><div><h2>Merge Images</h2><p class="sd">Combine multiple images into one image</p></div></div>
+    <div class="dz" id="dropMergeImg"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><p>Drop images here</p><p class="dh">or tap to select</p><input type="file" id="fileMergeImg" accept="image/*" multiple></div>
+    <div id="miGrid" class="mi-grid"></div>
+    <div class="mi-cfg" id="miCfg" style="display:none">
+      <div class="sr"><label>Layout:</label><select class="selinput" id="miLayout"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option><option value="grid">Grid</option></select></div>
+      <div class="sr"><label>Gap:</label><select class="selinput" id="miGap"><option value="0">None</option><option value="10" selected>10px</option><option value="20">20px</option></select></div>
+      <div class="sr"><label>Background:</label><select class="selinput" id="miBg"><option value="#ffffff">White</option><option value="#000000">Black</option><option value="transparent">Transparent</option></select></div>
+    </div>
+    </div>
+    <div class="ab2"><button class="ic-btn off" id="shareMergeImg" title="Share"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button></div>
+    <div class="ab"><button class="btn bs" id="clearMergeImg" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 12 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Clear All</button><button class="btn bp" id="btnMergeImg" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Merge Images</button></div>
+  </section>
+
+</main>
+
+<nav class="bnav">
+  <button class="nb on" data-section="merge"><span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="14" height="18" rx="2"/><path d="M16 9h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4"/></svg></span><span class="nl">Merge</span></button>
+  <button class="nb" data-section="split"><span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.59" y2="13.51"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.59" y1="10.49" x2="14.47" y2="14.48"/></svg></span><span class="nl">Split</span></button>
+  <button class="nb" data-section="unlock"><span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span><span class="nl">Unlock</span></button>
+  <button class="nb" data-section="pdf2img"><span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="nl">PDF&#8594;Img</span></button>
+  <button class="nb" data-section="img2pdf"><span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="8" y="13" width="8" height="5" rx="1"/><path d="M10 16l2-3 2 3"/></svg></span><span class="nl">Img&#8594;PDF</span></button>
+  <button class="nb" data-section="mergeimg"><span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="nl">Merge Img</span></button>
+</nav>
+
+<div class="lo hidden" id="overlay"><div class="ls"></div><p id="loadingText">Processing...</p></div>
+<div class="toast-wrap" id="toastWrap"><div class="toast hidden" id="toast"></div></div>
+
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+var PDFDocument = PDFLib.PDFDocument;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+var mergeFiles = [];
+var img2pdfFiles = [];
+var mergeImgFiles = [];
+var splitDoc = null;
+var splitPages = [];
+var unlockBytes = null;
+var pdf2imgBytes = null;
+var pdf2imgPages = [];
+var currentSection = 'merge';
+var theme = localStorage.getItem('theme') || 'dark';
+var lastBlob = null;
+var lastFilename = '';
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { document.getElementById('splash').classList.add('hide'); updateThemeColor(); }, 1800);
+  applyTheme();
+  setupNavigation();
+  setupThemeToggle();
+  setupReset();
+  setupMerge();
+  setupSplit();
+  setupUnlock();
+  setupPdf2Img();
+  setupImg2Pdf();
+  setupMergeImg();
+  setupDropZones();
+  setupShareButtons();
+});
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', theme);
+  updateThemeColor();
+  document.getElementById('themeIcon').innerHTML = theme === 'dark' ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+}
+
+function updateThemeColor() {
+  var tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', theme === 'dark' ? '#0a0a0a' : '#f5f5f5');
+}
+
+function setupThemeToggle() {
+  document.getElementById('themeBtn').addEventListener('click', function() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', theme);
+    applyTheme();
+    updateThemeColor();
+  });
+}
+
+function setupReset() {
+  document.getElementById('resetBtn').addEventListener('click', function() {
+    if (!confirm('Delete all data?')) return;
+    mergeFiles = []; renderMergeList();
+    img2pdfFiles = []; renderImg2PdfList();
+    mergeImgFiles = []; renderMergeImgGrid();
+    splitDoc = null; splitPages = [];
+    document.getElementById('pagesSplit').innerHTML = '';
+    document.getElementById('btnSelectAll').disabled = true;
+    document.getElementById('btnExtract').disabled = true;
+    document.getElementById('shareSplit').classList.add('off');
+    unlockBytes = null;
+    document.getElementById('dropUnlock').classList.remove('hidden');
+    document.getElementById('dropUnlock').innerHTML = '<div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><p>Drop a protected PDF</p><p class="dh">or tap to select</p><input type="file" id="fileUnlock" accept=".pdf">';
+    document.getElementById('infoUnlock').classList.add('hidden');
+    document.getElementById('btnUnlock').disabled = true;
+    document.getElementById('shareUnlock').classList.add('off');
+    document.getElementById('passInput').value = '';
+    pdf2imgBytes = null; pdf2imgPages = [];
+    document.getElementById('dropPdf2Img').classList.remove('hidden');
+    document.getElementById('dropPdf2Img').innerHTML = '<div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><p>Drop a PDF here</p><p class="dh">or tap to select</p><input type="file" id="filePdf2Img" accept=".pdf">';
+    document.getElementById('settingsPdf2Img').classList.add('hidden');
+    document.getElementById('previewPdf2Img').innerHTML = '';
+    document.getElementById('btnPdf2Img').disabled = true;
+    document.getElementById('filePdf2Img').addEventListener('change', function(e) { if (e.target.files[0]) loadPdf2Img(e.target.files[0]); e.target.value = ''; });
+    document.getElementById('shareMerge').classList.add('off');
+    document.getElementById('shareImg2Pdf').classList.add('off');
+    document.getElementById('shareMergeImg').classList.add('off');
+    setupDropZones();
+    showToast('All data cleared', 'success');
+  });
+}
+
+function setupNavigation() {
+  var buttons = document.querySelectorAll('.nb');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener('click', function() {
+      var section = this.getAttribute('data-section');
+      currentSection = section;
+      var allBtns = document.querySelectorAll('.nb');
+      for (var j = 0; j < allBtns.length; j++) allBtns[j].classList.remove('on');
+      this.classList.add('on');
+      var allSecs = document.querySelectorAll('.sec');
+      for (var j = 0; j < allSecs.length; j++) allSecs[j].classList.remove('on');
+      var map = {merge:'secMerge',split:'secSplit',unlock:'secUnlock',pdf2img:'secPdf2Img',img2pdf:'secImg2Pdf',mergeimg:'secMergeImg'};
+      document.getElementById(map[section]).classList.add('on');
+    });
+  }
+}
+
+function showToast(msg, type) {
+  type = type || 'info';
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.className = 'toast hidden'; }, 3000);
+}
+
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'Processing...';
+  document.getElementById('overlay').classList.remove('hidden');
+}
+
+function hideLoading() {
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function downloadBlob(blob, filename) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+function setupShareButtons() {
+  var ids = ['shareMerge','shareSplit','shareUnlock','sharePdf2Img','shareImg2Pdf','shareMergeImg'];
+  for (var i = 0; i < ids.length; i++) {
+    (function(id) {
+      var btn = document.getElementById(id);
+      if (btn) {
+        btn.addEventListener('click', function() {
+          if (!lastBlob) { showToast('Nothing to share yet', 'warning'); return; }
+          if (navigator.share) {
+            var file = new File([lastBlob], lastFilename, { type: lastBlob.type });
+            navigator.share({ files: [file] }).catch(function() {});
+          } else {
+            downloadBlob(lastBlob, lastFilename);
+            showToast('Downloaded (share not supported)', 'info');
+          }
+        });
+      }
+    })(ids[i]);
+  }
+}
+
+function setLastResult(blob, filename) {
+  lastBlob = blob;
+  lastFilename = filename;
+  var map = {
+    merge: 'shareMerge',
+    split: 'shareSplit',
+    unlock: 'shareUnlock',
+    pdf2img: 'sharePdf2Img',
+    img2pdf: 'shareImg2Pdf',
+    mergeimg: 'shareMergeImg'
+  };
+  var btn = map[currentSection];
+  if (btn) document.getElementById(btn).classList.remove('off');
+}
+
+function setupDropZones() {
+  var zones = document.querySelectorAll('.dz');
+  for (var i = 0; i < zones.length; i++) {
+    (function(zone) {
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+      zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        var files = [];
+        for (var j = 0; j < e.dataTransfer.files.length; j++) files.push(e.dataTransfer.files[j]);
+        handleDroppedFiles(files);
+      });
+    })(zones[i]);
+  }
+}
+
+function handleDroppedFiles(files) {
+  if (currentSection === 'merge') {
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name.toLowerCase().endsWith('.pdf')) addMergeFile(files[i]);
+    }
+  } else if (currentSection === 'split') {
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name.toLowerCase().endsWith('.pdf')) { loadSplitPdf(files[i]); break; }
+    }
+  } else if (currentSection === 'unlock') {
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name.toLowerCase().endsWith('.pdf')) { loadUnlockPdf(files[i]); break; }
+    }
+  } else if (currentSection === 'pdf2img') {
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name.toLowerCase().endsWith('.pdf')) { loadPdf2Img(files[i]); break; }
+    }
+  } else if (currentSection === 'img2pdf') {
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].type.startsWith('image/')) addImg2PdfFile(files[i]);
+    }
+  } else if (currentSection === 'mergeimg') {
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].type.startsWith('image/')) addMergeImgFile(files[i]);
+    }
+  }
+}
+
+/* ===== MERGE PDF ===== */
+function setupMerge() {
+  document.getElementById('fileMerge').addEventListener('change', function(e) {
+    for (var i = 0; i < e.target.files.length; i++) addMergeFile(e.target.files[i]);
+    e.target.value = '';
+  });
+  document.getElementById('clearMerge').addEventListener('click', function() { mergeFiles = []; renderMergeList(); document.getElementById('shareMerge').classList.add('off'); });
+  document.getElementById('btnMerge').addEventListener('click', mergePdf);
+}
+
+function addMergeFile(file) {
+  if (!file.name.toLowerCase().endsWith('.pdf')) { showToast('Select PDF files', 'warning'); return; }
+  mergeFiles.push({ file: file, name: file.name, size: file.size });
+  renderMergeList();
+}
+
+function renderMergeList() {
+  var list = document.getElementById('listMerge');
+  var btnM = document.getElementById('btnMerge');
+  var btnC = document.getElementById('clearMerge');
+  if (!mergeFiles.length) { list.innerHTML = ''; btnM.disabled = true; btnC.disabled = true; document.getElementById('shareMerge').classList.add('off'); return; }
+  btnM.disabled = false; btnC.disabled = false;
+  var html = '';
+  for (var i = 0; i < mergeFiles.length; i++) {
+    html += '<div class="fi" draggable="true" data-index="' + i + '">';
+    html += '<span class="draghandle">\u22EE\u22EE</span><span class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>';
+    html += '<div class="dt"><span class="nm">' + mergeFiles[i].name + '</span><span class="mt">' + formatSize(mergeFiles[i].size) + '</span></div>';
+    html += '<button class="rm" data-index="' + i + '">\u2715</button></div>';
+  }
+  list.innerHTML = html;
+  var btns = list.querySelectorAll('.rm');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function(e) { e.stopPropagation(); mergeFiles.splice(parseInt(this.getAttribute('data-index')), 1); renderMergeList(); });
+  }
+  var dragIdx = null;
+  var items = list.querySelectorAll('.fi');
+  for (var i = 0; i < items.length; i++) {
+    items[i].addEventListener('dragstart', function() { dragIdx = parseInt(this.getAttribute('data-index')); this.classList.add('dragging'); });
+    items[i].addEventListener('dragend', function() { this.classList.remove('dragging'); });
+    items[i].addEventListener('dragover', function(e) { e.preventDefault(); });
+    items[i].addEventListener('drop', function(e) {
+      e.preventDefault();
+      var dropIdx = parseInt(this.getAttribute('data-index'));
+      if (dragIdx !== null && dragIdx !== dropIdx) { var m = mergeFiles.splice(dragIdx, 1)[0]; mergeFiles.splice(dropIdx, 0, m); renderMergeList(); }
+      dragIdx = null;
+    });
+  }
+}
+
+async function mergePdf() {
+  if (!mergeFiles.length) return;
+  showLoading('Merging PDFs...');
+  try {
+    var merged = await PDFDocument.create();
+    for (var i = 0; i < mergeFiles.length; i++) {
+      var bytes = await mergeFiles[i].file.arrayBuffer();
+      var pdf = await PDFDocument.load(bytes);
+      var pages = await merged.copyPages(pdf, pdf.getPageIndices());
+      for (var j = 0; j < pages.length; j++) merged.addPage(pages[j]);
+    }
+    var blob = new Blob([await merged.save()], { type: 'application/pdf' });
+    setLastResult(blob, 'merged.pdf');
+    downloadBlob(blob, 'merged.pdf');
+    showToast('PDFs merged!', 'success');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  hideLoading();
+}
+
+/* ===== SPLIT PDF ===== */
+function setupSplit() {
+  document.getElementById('fileSplit').addEventListener('change', function(e) { if (e.target.files[0]) loadSplitPdf(e.target.files[0]); e.target.value = ''; });
+  document.getElementById('btnSelectAll').addEventListener('click', function() {
+    var allSel = true;
+    for (var i = 0; i < splitPages.length; i++) { if (!splitPages[i].selected) { allSel = false; break; } }
+    for (var i = 0; i < splitPages.length; i++) splitPages[i].selected = !allSel;
+    renderSplitPages();
+  });
+  document.getElementById('btnExtract').addEventListener('click', extractPages);
+}
+
+async function loadSplitPdf(file) {
+  showLoading('Loading PDF...');
+  try {
+    var bytes = await file.arrayBuffer();
+    splitDoc = await PDFDocument.load(bytes);
+    splitPages = [];
+    for (var i = 0; i < splitDoc.getPageCount(); i++) splitPages.push({ index: i, selected: true });
+    document.getElementById('dropSplit').innerHTML = '<div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></div><p>' + file.name + '</p><p class="dh">' + splitDoc.getPageCount() + ' pages</p>';
+    await renderSplitPages();
+    document.getElementById('btnSelectAll').disabled = false;
+    document.getElementById('btnExtract').disabled = false;
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  hideLoading();
+}
+
+async function renderSplitPages() {
+  var grid = document.getElementById('pagesSplit');
+  grid.innerHTML = '';
+  var srcBytes = await splitDoc.save();
+  var srcDoc = await PDFDocument.load(srcBytes);
+  for (var i = 0; i < splitPages.length; i++) {
+    var page = splitPages[i];
+    var card = document.createElement('div');
+    card.className = 'pc' + (page.selected ? ' selected' : '');
+    card.setAttribute('data-index', page.index);
+    var canvas = document.createElement('canvas');
+    var tempDoc = await PDFDocument.create();
+    var copied = await tempDoc.copyPages(srcDoc, [page.index]);
+    tempDoc.addPage(copied[0]);
+    var tempBytes = await tempDoc.save();
+    var pdfDoc = await pdfjsLib.getDocument({ data: tempBytes }).promise;
+    var pdfPage = await pdfDoc.getPage(1);
+    var viewport = pdfPage.getViewport({ scale: 0.4 });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+    card.innerHTML = '<div class="ck">\u2713</div><span class="pn">Page ' + (page.index + 1) + '</span>';
+    card.insertBefore(canvas, card.firstChild);
+    card.addEventListener('click', function() {
+      var idx = parseInt(this.getAttribute('data-index'));
+      splitPages[idx].selected = !splitPages[idx].selected;
+      this.classList.toggle('selected');
+      var allSel = true;
+      for (var k = 0; k < splitPages.length; k++) { if (!splitPages[k].selected) { allSel = false; break; } }
+      document.getElementById('btnSelectAll').textContent = allSel ? 'Deselect All' : 'Select All';
+    });
+    grid.appendChild(card);
+  }
+}
+
+async function extractPages() {
+  var sel = [];
+  for (var i = 0; i < splitPages.length; i++) { if (splitPages[i].selected) sel.push(splitPages[i]); }
+  if (!sel.length) { showToast('Select at least one page', 'warning'); return; }
+  showLoading('Extracting...');
+  try {
+    var newPdf = await PDFDocument.create();
+    var srcDoc = await PDFDocument.load(await splitDoc.save());
+    var indices = sel.map(function(p) { return p.index; });
+    var pages = await newPdf.copyPages(srcDoc, indices);
+    for (var i = 0; i < pages.length; i++) newPdf.addPage(pages[i]);
+    var blob = new Blob([await newPdf.save()], { type: 'application/pdf' });
+    setLastResult(blob, 'extracted.pdf');
+    downloadBlob(blob, 'extracted.pdf');
+    showToast('Extracted ' + sel.length + ' pages!', 'success');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  hideLoading();
+}
+
+/* ===== UNLOCK PDF ===== */
+function setupUnlock() {
+  document.getElementById('fileUnlock').addEventListener('change', function(e) { if (e.target.files[0]) loadUnlockPdf(e.target.files[0]); e.target.value = ''; });
+  document.getElementById('togglePass').addEventListener('click', function() {
+    var inp = document.getElementById('passInput');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+  document.getElementById('btnUnlock').addEventListener('click', unlockPdf);
+}
+
+async function loadUnlockPdf(file) {
+  try {
+    unlockBytes = await file.arrayBuffer();
+    document.getElementById('dropUnlock').classList.add('hidden');
+    document.getElementById('infoUnlock').classList.remove('hidden');
+    document.getElementById('nameUnlock').textContent = file.name;
+    var st = document.getElementById('statusUnlock');
+    try {
+      await PDFDocument.load(unlockBytes);
+      st.textContent = 'Not encrypted';
+      st.className = 'st unlocked';
+    } catch (e) {
+      st.textContent = 'Password protected';
+      st.className = 'st locked';
+      document.getElementById('btnUnlock').disabled = false;
+    }
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function unlockPdf() {
+  var pw = document.getElementById('passInput').value;
+  if (!pw) { showToast('Enter password', 'warning'); return; }
+  showLoading('Removing password...');
+  try {
+    var doc = await PDFDocument.load(unlockBytes, { password: pw });
+    var blob = new Blob([await doc.save()], { type: 'application/pdf' });
+    setLastResult(blob, 'unlocked.pdf');
+    downloadBlob(blob, 'unlocked.pdf');
+    showToast('Password removed!', 'success');
+  } catch (e) { showToast('Wrong password', 'error'); }
+  hideLoading();
+}
+
+/* ===== PDF TO IMAGES ===== */
+function setupPdf2Img() {
+  document.getElementById('filePdf2Img').addEventListener('change', function(e) { if (e.target.files[0]) loadPdf2Img(e.target.files[0]); e.target.value = ''; });
+  document.getElementById('btnPdf2Img').addEventListener('click', convertPdfToImages);
+  document.getElementById('clearPdf2Img').addEventListener('click', function() {
+    pdf2imgBytes = null; pdf2imgPages = [];
+    document.getElementById('dropPdf2Img').classList.remove('hidden');
+    document.getElementById('dropPdf2Img').innerHTML = '<div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><p>Drop a PDF here</p><p class="dh">or tap to select</p><input type="file" id="filePdf2Img" accept=".pdf">';
+    document.getElementById('settingsPdf2Img').classList.add('hidden');
+    document.getElementById('previewPdf2Img').innerHTML = '';
+    document.getElementById('btnPdf2Img').disabled = true;
+    document.getElementById('filePdf2Img').addEventListener('change', function(e) { if (e.target.files[0]) loadPdf2Img(e.target.files[0]); e.target.value = ''; });
+  });
+}
+
+async function loadPdf2Img(file) {
+  showLoading('Loading PDF...');
+  try {
+    pdf2imgBytes = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({ data: pdf2imgBytes.slice(0) }).promise;
+    pdf2imgPages = [];
+    for (var i = 0; i < pdf.numPages; i++) pdf2imgPages.push({ index: i, selected: true });
+    var container = document.getElementById('previewPdf2Img');
+    container.innerHTML = '';
+    var srcBytes = new Uint8Array(pdf2imgBytes.slice(0));
+    for (var i = 0; i < pdf.numPages; i++) {
+      var page = await pdf.getPage(i + 1);
+      var vp = page.getViewport({ scale: 0.4 });
+      var card = document.createElement('div');
+      card.className = 'pc selected';
+      card.setAttribute('data-index', i);
+      var cv = document.createElement('canvas');
+      cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      card.innerHTML = '<div class="ck">\u2713</div><span class="pn">Page ' + (i + 1) + '</span>';
+      card.insertBefore(cv, card.firstChild);
+      card.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-index'));
+        pdf2imgPages[idx].selected = !pdf2imgPages[idx].selected;
+        this.classList.toggle('selected');
+        updatePdf2ImgCount();
+      });
+      container.appendChild(card);
+    }
+    document.getElementById('dropPdf2Img').classList.add('hidden');
+    document.getElementById('settingsPdf2Img').classList.remove('hidden');
+    document.getElementById('btnPdf2Img').disabled = false;
+    document.getElementById('btnSelAllPdf2Img').addEventListener('click', function() {
+      for (var k = 0; k < pdf2imgPages.length; k++) pdf2imgPages[k].selected = true;
+      var cards = document.getElementById('previewPdf2Img').querySelectorAll('.pc');
+      for (var k = 0; k < cards.length; k++) cards[k].classList.add('selected');
+      updatePdf2ImgCount();
+    });
+    document.getElementById('btnDeselAllPdf2Img').addEventListener('click', function() {
+      for (var k = 0; k < pdf2imgPages.length; k++) pdf2imgPages[k].selected = false;
+      var cards = document.getElementById('previewPdf2Img').querySelectorAll('.pc');
+      for (var k = 0; k < cards.length; k++) cards[k].classList.remove('selected');
+      updatePdf2ImgCount();
+    });
+    updatePdf2ImgCount();
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  hideLoading();
+}
+
+function updatePdf2ImgCount() {
+  var sel = 0;
+  for (var k = 0; k < pdf2imgPages.length; k++) { if (pdf2imgPages[k].selected) sel++; }
+  document.getElementById('pdf2imgCount').textContent = sel + ' / ' + pdf2imgPages.length + ' selected';
+}
+
+async function convertPdfToImages() {
+  if (!pdf2imgBytes) return;
+  var selected = [];
+  for (var k = 0; k < pdf2imgPages.length; k++) { if (pdf2imgPages[k].selected) selected.push(pdf2imgPages[k]); }
+  if (!selected.length) { showToast('Select at least one page', 'warning'); return; }
+  var fmt = document.getElementById('fmtImg').value;
+  var qual = parseFloat(document.getElementById('qualImg').value);
+  var ext = fmt === 'jpeg' ? 'jpg' : fmt;
+  showLoading('Converting...');
+  try {
+    var pdf = await pdfjsLib.getDocument({ data: pdf2imgBytes.slice(0) }).promise;
+    var saved = 0;
+    for (var k = 0; k < selected.length; k++) {
+      var idx = selected[k].index;
+      var page = await pdf.getPage(idx + 1);
+      var vp = page.getViewport({ scale: 2 });
+      var cv = document.createElement('canvas');
+      cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      var blob = await new Promise(function(resolve) { cv.toBlob(function(b) { resolve(b); }, 'image/' + fmt, qual); });
+      downloadBlob(blob, 'page_' + (idx + 1) + '.' + ext);
+      saved++;
+      if (k < selected.length - 1) await new Promise(function(r) { setTimeout(r, 300); });
+    }
+    showToast('Saved ' + saved + ' images!', 'success');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  hideLoading();
+}
+
+/* ===== IMAGES TO PDF ===== */
+function setupImg2Pdf() {
+  document.getElementById('fileImg2Pdf').addEventListener('change', function(e) {
+    for (var i = 0; i < e.target.files.length; i++) addImg2PdfFile(e.target.files[i]);
+    e.target.value = '';
+  });
+  document.getElementById('clearImg2Pdf').addEventListener('click', function() { img2pdfFiles = []; renderImg2PdfList(); document.getElementById('shareImg2Pdf').classList.add('off'); });
+  document.getElementById('btnImg2Pdf').addEventListener('click', createPdfFromImages);
+}
+
+function addImg2PdfFile(file) {
+  if (!file.type.startsWith('image/')) { showToast('Select image files', 'warning'); return; }
+  img2pdfFiles.push({ file: file, name: file.name, size: file.size });
+  renderImg2PdfList();
+}
+
+function renderImg2PdfList() {
+  var list = document.getElementById('listImg2Pdf');
+  var btnC = document.getElementById('btnImg2Pdf');
+  var btnCl = document.getElementById('clearImg2Pdf');
+  if (!img2pdfFiles.length) { list.innerHTML = ''; btnC.disabled = true; btnCl.disabled = true; document.getElementById('shareImg2Pdf').classList.add('off'); return; }
+  btnC.disabled = false; btnCl.disabled = false;
+  var html = '';
+  for (var i = 0; i < img2pdfFiles.length; i++) {
+    html += '<div class="fi" draggable="true" data-index="' + i + '">';
+    html += '<span class="draghandle">\u22EE\u22EE</span><span class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>';
+    html += '<div class="dt"><span class="nm">' + img2pdfFiles[i].name + '</span><span class="mt">' + formatSize(img2pdfFiles[i].size) + '</span></div>';
+    html += '<button class="rm" data-index="' + i + '">\u2715</button></div>';
+  }
+  list.innerHTML = html;
+  var btns = list.querySelectorAll('.rm');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function(e) { e.stopPropagation(); img2pdfFiles.splice(parseInt(this.getAttribute('data-index')), 1); renderImg2PdfList(); });
+  }
+  var dragIdx = null;
+  var items = list.querySelectorAll('.fi');
+  for (var i = 0; i < items.length; i++) {
+    items[i].addEventListener('dragstart', function() { dragIdx = parseInt(this.getAttribute('data-index')); this.classList.add('dragging'); });
+    items[i].addEventListener('dragend', function() { this.classList.remove('dragging'); });
+    items[i].addEventListener('dragover', function(e) { e.preventDefault(); });
+    items[i].addEventListener('drop', function(e) {
+      e.preventDefault();
+      var dropIdx = parseInt(this.getAttribute('data-index'));
+      if (dragIdx !== null && dragIdx !== dropIdx) { var m = img2pdfFiles.splice(dragIdx, 1)[0]; img2pdfFiles.splice(dropIdx, 0, m); renderImg2PdfList(); }
+      dragIdx = null;
+    });
+  }
+}
+
+async function createPdfFromImages() {
+  if (!img2pdfFiles.length) return;
+  showLoading('Creating PDF...');
+  try {
+    var pdf = await PDFDocument.create();
+    for (var i = 0; i < img2pdfFiles.length; i++) {
+      var bytes = await img2pdfFiles[i].file.arrayBuffer();
+      var image = img2pdfFiles[i].file.type === 'image/png' ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+      var page = pdf.addPage([image.width, image.height]);
+      page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+    }
+    var blob = new Blob([await pdf.save()], { type: 'application/pdf' });
+    setLastResult(blob, 'images.pdf');
+    downloadBlob(blob, 'images.pdf');
+    showToast('PDF created!', 'success');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  hideLoading();
+}
+
+/* ===== MERGE IMAGES ===== */
+function setupMergeImg() {
+  document.getElementById('fileMergeImg').addEventListener('change', function(e) {
+    for (var i = 0; i < e.target.files.length; i++) addMergeImgFile(e.target.files[i]);
+    e.target.value = '';
+  });
+  document.getElementById('clearMergeImg').addEventListener('click', function() { mergeImgFiles = []; renderMergeImgGrid(); document.getElementById('shareMergeImg').classList.add('off'); });
+  document.getElementById('btnMergeImg').addEventListener('click', mergeImages);
+}
+
+function addMergeImgFile(file) {
+  if (!file.type.startsWith('image/')) { showToast('Select image files', 'warning'); return; }
+  mergeImgFiles.push({ file: file, name: file.name });
+  renderMergeImgGrid();
+}
+
+function renderMergeImgGrid() {
+  var grid = document.getElementById('miGrid');
+  var btnM = document.getElementById('btnMergeImg');
+  var btnC = document.getElementById('clearMergeImg');
+  var cfg = document.getElementById('miCfg');
+  if (!mergeImgFiles.length) { grid.innerHTML = ''; btnM.disabled = true; btnC.disabled = true; cfg.style.display = 'none'; document.getElementById('shareMergeImg').classList.add('off'); return; }
+  btnM.disabled = false; btnC.disabled = false; cfg.style.display = '';
+  grid.innerHTML = '';
+  for (var i = 0; i < mergeImgFiles.length; i++) {
+    (function(idx) {
+      var item = document.createElement('div');
+      item.className = 'mi-item';
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(mergeImgFiles[idx].file);
+      item.appendChild(img);
+      var rmBtn = document.createElement('button');
+      rmBtn.className = 'mi-rm';
+      rmBtn.textContent = '\u2715';
+      rmBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        mergeImgFiles.splice(idx, 1);
+        renderMergeImgGrid();
+      });
+      item.appendChild(rmBtn);
+      grid.appendChild(item);
+    })(i);
+  }
+}
+
+async function mergeImages() {
+  if (!mergeImgFiles.length) return;
+  showLoading('Merging images...');
+  try {
+    var layout = document.getElementById('miLayout').value;
+    var gap = parseInt(document.getElementById('miGap').value);
+    var bgColor = document.getElementById('miBg').value;
+
+    var imgs = [];
+    for (var i = 0; i < mergeImgFiles.length; i++) {
+      imgs.push(await loadImage(mergeImgFiles[i].file));
+    }
+
+    var targetW = 0, targetH = 0;
+    if (layout === 'vertical') {
+      for (var i = 0; i < imgs.length; i++) targetW = Math.max(targetW, imgs[i].width);
+      for (var i = 0; i < imgs.length; i++) targetH += Math.round(imgs[i].height * (targetW / imgs[i].width));
+      targetH += gap * (imgs.length - 1);
+    } else if (layout === 'horizontal') {
+      for (var i = 0; i < imgs.length; i++) targetH = Math.max(targetH, imgs[i].height);
+      for (var i = 0; i < imgs.length; i++) targetW += Math.round(imgs[i].width * (targetH / imgs[i].height));
+      targetW += gap * (imgs.length - 1);
+    } else {
+      var gw = 0, gh = 0;
+      for (var i = 0; i < imgs.length; i++) { gw = Math.max(gw, imgs[i].width); gh = Math.max(gh, imgs[i].height); }
+      var cols = Math.ceil(Math.sqrt(imgs.length));
+      var rows = Math.ceil(imgs.length / cols);
+      targetW = gw * cols + gap * (cols - 1);
+      targetH = gh * rows + gap * (rows - 1);
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+    var ctx = canvas.getContext('2d');
+
+    if (bgColor !== 'transparent') {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, targetW, targetH);
+    }
+
+    var y = 0, x = 0;
+    if (layout === 'vertical') {
+      for (var i = 0; i < imgs.length; i++) {
+        var scale = targetW / imgs[i].width;
+        var dh = Math.round(imgs[i].height * scale);
+        ctx.drawImage(imgs[i], 0, y, targetW, dh);
+        y += dh + gap;
+      }
+    } else if (layout === 'horizontal') {
+      for (var i = 0; i < imgs.length; i++) {
+        var scale = targetH / imgs[i].height;
+        var dw = Math.round(imgs[i].width * scale);
+        ctx.drawImage(imgs[i], x, 0, dw, targetH);
+        x += dw + gap;
+      }
+    } else {
+      var cols = Math.ceil(Math.sqrt(imgs.length));
+      var cw = (targetW - gap * (cols - 1)) / cols;
+      var rh = (targetH - gap * (Math.ceil(imgs.length / cols) - 1)) / Math.ceil(imgs.length / cols);
+      for (var i = 0; i < imgs.length; i++) {
+        var col = i % cols;
+        var row = Math.floor(i / cols);
+        var ox = col * (cw + gap);
+        var oy = row * (rh + gap);
+        ctx.drawImage(imgs[i], ox, oy, cw, rh);
+      }
+    }
+
+    canvas.toBlob(function(blob) {
+      setLastResult(blob, 'merged_images.png');
+      downloadBlob(blob, 'merged_images.png');
+      showToast('Images merged!', 'success');
+      hideLoading();
+    }, 'image/png');
+  } catch (e) { showToast('Error: ' + e.message, 'error'); hideLoading(); }
+}
+
+function loadImage(file) {
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.onload = function() { URL.revokeObjectURL(img.src); resolve(img); };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+</script>
+</body>
+</html>

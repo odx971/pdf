@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <title>PDF Toolbox</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <h1 class="header-title">PDF Toolbox</h1>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                <span class="theme-icon">☀️</span>
+            </button>
+        </header>
+
+        <main class="main-content" id="mainContent">
+            <!-- Merge PDF Section -->
+            <section id="mergeSection" class="section active">
+                <div class="section-header">
+                    <span class="section-icon">🔗</span>
+                    <h2>Merge PDF</h2>
+                    <p class="section-desc">Combine multiple PDF files into one</p>
+                </div>
+                <div class="drop-zone" id="mergeDropZone">
+                    <div class="drop-icon">📄</div>
+                    <p>Drop PDF files here</p>
+                    <p class="drop-hint">or tap to select files</p>
+                    <input type="file" id="mergeFileInput" accept=".pdf" multiple hidden>
+                </div>
+                <div id="mergeFileList" class="file-list"></div>
+                <div class="action-bar">
+                    <button id="mergeClearBtn" class="btn btn-secondary" disabled>Clear All</button>
+                    <button id="mergeBtn" class="btn btn-primary" disabled>Merge PDFs</button>
+                </div>
+            </section>
+
+            <!-- Split PDF Section -->
+            <section id="splitSection" class="section">
+                <div class="section-header">
+                    <span class="section-icon">📑</span>
+                    <h2>Split PDF</h2>
+                    <p class="section-desc">Extract specific pages from a PDF</p>
+                </div>
+                <div class="drop-zone" id="splitDropZone">
+                    <div class="drop-icon">📄</div>
+                    <p>Drop a PDF file here</p>
+                    <p class="drop-hint">or tap to select a file</p>
+                    <input type="file" id="splitFileInput" accept=".pdf" hidden>
+                </div>
+                <div id="splitPageGrid" class="page-grid"></div>
+                <div class="action-bar">
+                    <button id="splitSelectAll" class="btn btn-secondary" disabled>Select All</button>
+                    <button id="splitExtractBtn" class="btn btn-primary" disabled>Extract Pages</button>
+                </div>
+            </section>
+
+            <!-- Unlock PDF Section -->
+            <section id="unlockSection" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔓</span>
+                    <h2>Remove Password</h2>
+                    <p class="section-desc">Remove password protection from a PDF</p>
+                </div>
+                <div class="drop-zone" id="unlockDropZone">
+                    <div class="drop-icon">🔒</div>
+                    <p>Drop a password-protected PDF</p>
+                    <p class="drop-hint">or tap to select a file</p>
+                    <input type="file" id="unlockFileInput" accept=".pdf" hidden>
+                </div>
+                <div id="unlockFileInfo" class="file-info hidden">
+                    <div class="file-card">
+                        <span class="file-icon">📄</span>
+                        <div class="file-details">
+                            <span id="unlockFileName" class="file-name"></span>
+                            <span id="unlockFileStatus" class="file-status"></span>
+                        </div>
+                    </div>
+                    <div class="password-input-group">
+                        <input type="password" id="unlockPassword" placeholder="Enter password" class="password-input">
+                        <button id="togglePasswordBtn" class="btn-icon" aria-label="Toggle password visibility">
+                            <span>👁️</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="action-bar">
+                    <button id="unlockBtn" class="btn btn-primary" disabled>Remove Password</button>
+                </div>
+            </section>
+
+            <!-- PDF to Images Section -->
+            <section id="pdf2imgSection" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🖼️</span>
+                    <h2>PDF to Images</h2>
+                    <p class="section-desc">Convert PDF pages to image files</p>
+                </div>
+                <div class="drop-zone" id="pdf2imgDropZone">
+                    <div class="drop-icon">📄</div>
+                    <p>Drop a PDF file here</p>
+                    <p class="drop-hint">or tap to select a file</p>
+                    <input type="file" id="pdf2imgFileInput" accept=".pdf" hidden>
+                </div>
+                <div id="pdf2imgPreview" class="preview-container hidden">
+                    <div class="settings-row">
+                        <label>Format:</label>
+                        <select id="imgFormat" class="select-input">
+                            <option value="png">PNG</option>
+                            <option value="jpeg">JPEG</option>
+                        </select>
+                        <label>Quality:</label>
+                        <select id="imgQuality" class="select-input">
+                            <option value="0.9">High</option>
+                            <option value="0.7">Medium</option>
+                            <option value="0.5">Low</option>
+                        </select>
+                    </div>
+                    <div id="pdf2imgPages" class="preview-pages"></div>
+                </div>
+                <div class="action-bar">
+                    <button id="pdf2imgBtn" class="btn btn-primary" disabled>Convert to Images</button>
+                </div>
+            </section>
+
+            <!-- Images to PDF Section -->
+            <section id="img2pdfSection" class="section">
+                <div class="section-header">
+                    <span class="section-icon">📷</span>
+                    <h2>Images to PDF</h2>
+                    <p class="section-desc">Create a PDF from image files</p>
+                </div>
+                <div class="drop-zone" id="img2pdfDropZone">
+                    <div class="drop-icon">🖼️</div>
+                    <p>Drop images here</p>
+                    <p class="drop-hint">or tap to select images</p>
+                    <input type="file" id="img2pdfFileInput" accept="image/*" multiple hidden>
+                </div>
+                <div id="img2pdfFileList" class="file-list"></div>
+                <div class="action-bar">
+                    <button id="img2pdfClearBtn" class="btn btn-secondary" disabled>Clear All</button>
+                    <button id="img2pdfBtn" class="btn btn-primary" disabled>Create PDF</button>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-section="merge">
+                <span class="nav-icon">🔗</span>
+                <span class="nav-label">Merge</span>
+            </button>
+            <button class="nav-btn" data-section="split">
+                <span class="nav-icon">📑</span>
+                <span class="nav-label">Split</span>
+            </button>
+            <button class="nav-btn" data-section="unlock">
+                <span class="nav-icon">🔓</span>
+                <span class="nav-label">Unlock</span>
+            </button>
+            <button class="nav-btn" data-section="pdf2img">
+                <span class="nav-icon">🖼️</span>
+                <span class="nav-label">PDF→Img</span>
+            </button>
+            <button class="nav-btn" data-section="img2pdf">
+                <span class="nav-icon">📷</span>
+                <span class="nav-label">Img→PDF</span>
+            </button>
+        </nav>
+
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p id="loadingText">Processing...</p>
+        </div>
+
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
