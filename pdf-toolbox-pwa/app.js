@@ -13,9 +13,9 @@ let pdf2imgPdfBytes = null;
 let compressPdfBytes = null;
 
 const COMPRESS_PRESETS = {
-    high: { scale: 2.0, quality: 0.9 },
-    medium: { scale: 1.6, quality: 0.78 },
-    low: { scale: 1.2, quality: 0.62 }
+    high: { scale: 1.5, quality: 0.55 },
+    medium: { scale: 1.2, quality: 0.4 },
+    low: { scale: 1.0, quality: 0.25 }
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -758,7 +758,16 @@ async function compressPdf() {
         const outBytes = await outPdf.save();
         const blob = new Blob([outBytes], { type: 'application/pdf' });
         downloadBlob(blob, 'compressed.pdf');
-        showToast('PDF compressed successfully!', 'success');
+
+        const original = compressPdfBytes.byteLength;
+        const reduced = original - outBytes.byteLength;
+        const pct = (reduced / original) * 100;
+
+        if (reduced > 0) {
+            showToast(`Compressed: ${formatSize(original)} → ${formatSize(outBytes.byteLength)} (-${pct.toFixed(1)}%)`, 'success');
+        } else {
+            showToast('This PDF is mostly text; compression could not reduce its size', 'warning');
+        }
     } catch (err) {
         showToast('Error compressing PDF: ' + err.message, 'error');
     }

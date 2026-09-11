@@ -272,9 +272,9 @@ var theme = localStorage.getItem('theme') || 'dark';
 var lastBlob = null;
 var lastFilename = '';
 var COMPRESS_PRESETS = {
-  high: { scale: 2.0, quality: 0.9 },
-  medium: { scale: 1.6, quality: 0.78 },
-  low: { scale: 1.2, quality: 0.62 }
+  high: { scale: 1.5, quality: 0.55 },
+  medium: { scale: 1.2, quality: 0.4 },
+  low: { scale: 1.0, quality: 0.25 }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1051,7 +1051,13 @@ async function compressPdf() {
     var blob = new Blob([await outPdf.save()], { type: 'application/pdf' });
     setLastResult(blob, 'compressed.pdf');
     downloadBlob(blob, 'compressed.pdf');
-    showToast('PDF compressed!', 'success');
+    var reduced = compressBytes.byteLength - blob.size;
+    var pct = (reduced / compressBytes.byteLength) * 100;
+    if (reduced > 0) {
+      showToast('Compressed: ' + formatSize(compressBytes.byteLength) + ' \u2192 ' + formatSize(blob.size) + ' (-' + pct.toFixed(1) + '%)', 'success');
+    } else {
+      showToast('This PDF is mostly text; compression could not reduce its size', 'warning');
+    }
   } catch (e) { showToast('Error: ' + e.message, 'error'); }
   hideLoading();
 }
