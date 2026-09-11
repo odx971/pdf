@@ -10,6 +10,13 @@ let splitPdfDoc = null;
 let splitPages = [];
 let unlockPdfBytes = null;
 let pdf2imgPdfBytes = null;
+let compressPdfBytes = null;
+
+const COMPRESS_PRESETS = {
+    high: { scale: 1.5, quality: 0.85 },
+    medium: { scale: 1.0, quality: 0.6 },
+    low: { scale: 0.75, quality: 0.4 }
+};
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -22,6 +29,7 @@ function init() {
     setupUnlock();
     setupPdf2Img();
     setupImg2Pdf();
+    setupCompress();
     setupDragAndDrop();
 
     if ('serviceWorker' in navigator) {
@@ -126,6 +134,9 @@ function handleDroppedFiles(files) {
     } else if (section === 'img2pdf') {
         const imgs = files.filter(f => f.type.startsWith('image/'));
         imgs.forEach(f => addImg2PdfFile(f));
+    } else if (section === 'compress') {
+        const pdf = files.find(f => f.name.toLowerCase().endsWith('.pdf'));
+        if (pdf) loadCompressPdf(pdf);
     }
 }
 
@@ -650,6 +661,106 @@ async function createPdfFromImages() {
         showToast('PDF created successfully!', 'success');
     } catch (err) {
         showToast('Error creating PDF: ' + err.message, 'error');
+    }
+    hideLoading();
+}
+
+function setupCompress() {
+    const dropZone = document.getElementById('compressDropZone');
+    const fileInput = document.getElementById('compressFileInput');
+    const compressBtn = document.getElementById('compressBtn');
+    const clearBtn = document.getElementById('compressClearBtn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => {
+        if (e.target.files[0]) loadCompressPdf(e.target.files[0]);
+        fileInput.value = '';
+    });
+
+    clearBtn.addEventListener('click', () => {
+        compressPdfBytes = null;
+        document.getElementById('compressDropZone').classList.remove('hidden');
+        document.getElementById('compressFileInfo').classList.add('hidden');
+        compressBtn.disabled = true;
+        clearBtn.disabled = true;
+    });
+
+    compressBtn.addEventListener('click', compressPdf);
+}
+
+async function loadCompressPdf(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showToast('Please select a PDF file', 'warning');
+        return;
+    }
+
+    showLoading('Loading PDF...');
+    try {
+        compressPdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(compressPdfBytes);
+        const pageCount = pdfDoc.getPageCount();
+
+        document.getElementById('compressDropZone').classList.add('hidden');
+        document.getElementById('compressFileInfo').classList.remove('hidden');
+        document.getElementById('compressFileName').textContent = file.name;
+        document.getElementById('compressFileMeta').textContent = `${formatSize(file.size)} · ${pageCount} pages`;
+        document.getElementById('compressClearBtn').disabled = false;
+        document.getElementById('compressBtn').disabled = false;
+    } catch (err) {
+        showToast('Error loading PDF: ' + err.message, 'error');
+    }
+    hideLoading();
+}
+
+function dataUrlToBytes(dataUrl) {
+    const base64 = dataUrl.split(',')[1];
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
+
+async function compressPdf() {
+    if (!compressPdfBytes) return;
+
+    const preset = COMPRESS_PRESETS[document.getElementById('compressQuality').value];
+    showLoading('Compressing PDF...');
+    try {
+        const pdf = await pdfjsLib.getDocument({ data: compressPdfBytes.slice(0) }).promise;
+        const outPdf = await PDFDocument.create();
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const base = page.getViewport({ scale: 1 });
+            const viewport = page.getViewport({ scale: preset.scale });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            const dataUrl = canvas.toDataURL('image/jpeg', preset.quality);
+            const image = await outPdf.embedJpg(dataUrlToBytes(dataUrl));
+
+            const outPage = outPdf.addPage([base.width, base.height]);
+            outPage.drawImage(image, {
+                x: 0,
+                y: 0,
+                width: base.width,
+                height: base.height
+            });
+        }
+
+        const outBytes = await outPdf.save();
+        const blob = new Blob([outBytes], { type: 'application/pdf' });
+        downloadBlob(blob, 'compressed.pdf');
+        showToast('PDF compressed successfully!', 'success');
+    } catch (err) {
+        showToast('Error compressing PDF: ' + err.message, 'error');
     }
     hideLoading();
 }

@@ -147,6 +147,43 @@
                     <button id="img2pdfBtn" class="btn btn-primary" disabled>Create PDF</button>
                 </div>
             </section>
+
+            <!-- Compress PDF Section -->
+            <section id="compressSection" class="section">
+                <div class="section-header">
+                    <span class="section-icon">🗜️</span>
+                    <h2>Compress PDF</h2>
+                    <p class="section-desc">Reduce PDF file size</p>
+                </div>
+                <div class="drop-zone" id="compressDropZone">
+                    <div class="drop-icon">📄</div>
+                    <p>Drop a PDF file here</p>
+                    <p class="drop-hint">or tap to select a file</p>
+                    <input type="file" id="compressFileInput" accept=".pdf" hidden>
+                </div>
+                <div id="compressFileInfo" class="file-info hidden">
+                    <div class="file-card">
+                        <span class="file-icon">📄</span>
+                        <div class="file-details">
+                            <span id="compressFileName" class="file-name"></span>
+                            <span id="compressFileMeta" class="file-status"></span>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <label>Quality:</label>
+                        <select id="compressQuality" class="select-input">
+                            <option value="high">High (small reduction)</option>
+                            <option value="medium" selected>Medium (balanced)</option>
+                            <option value="low">Low (maximum reduction)</option>
+                        </select>
+                    </div>
+                    <p class="drop-hint">Best for scanned or image-heavy PDFs</p>
+                </div>
+                <div class="action-bar">
+                    <button id="compressClearBtn" class="btn btn-secondary" disabled>Clear</button>
+                    <button id="compressBtn" class="btn btn-primary" disabled>Compress PDF</button>
+                </div>
+            </section>
         </main>
 
         <nav class="bottom-nav">
@@ -169,6 +206,10 @@
             <button class="nav-btn" data-section="img2pdf">
                 <span class="nav-icon">📷</span>
                 <span class="nav-label">Img→PDF</span>
+            </button>
+            <button class="nav-btn" data-section="compress">
+                <span class="nav-icon">🗜️</span>
+                <span class="nav-label">Compress</span>
             </button>
         </nav>
 
