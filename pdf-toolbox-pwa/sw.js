@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdf-toolbox-v1';
+const CACHE_NAME = 'pdf-toolbox-v2';
 const ASSETS = [
     '/',
     '/index.html',
@@ -26,14 +26,18 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    if (event.request.url.includes('unpkg.com') ||
-        event.request.url.includes('cdnjs.cloudflare.com')) {
+    const request = event.request;
+
+    if (request.method !== 'GET') return;
+
+    if (request.url.includes('unpkg.com') ||
+        request.url.includes('cdnjs.cloudflare.com')) {
         event.respondWith(
-            caches.match(event.request).then(cached => {
+            caches.match(request).then(cached => {
                 if (cached) return cached;
-                return fetch(event.request).then(response => {
+                return fetch(request).then(response => {
                     const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
                     return response;
                 });
             })
@@ -42,6 +46,14 @@ self.addEventListener('fetch', event => {
     }
 
     event.respondWith(
-        caches.match(event.request).then(cached => cached || fetch(event.request))
+        fetch(request)
+            .then(response => {
+                if (response.ok) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+                }
+                return response;
+            })
+            .catch(() => caches.match(request))
     );
 });
