@@ -13,9 +13,9 @@ let pdf2imgPdfBytes = null;
 let compressPdfBytes = null;
 
 const COMPRESS_PRESETS = {
-    high: { scale: 1.5, quality: 0.85 },
-    medium: { scale: 1.0, quality: 0.6 },
-    low: { scale: 0.75, quality: 0.4 }
+    high: { scale: 2.0, quality: 0.9 },
+    medium: { scale: 1.6, quality: 0.78 },
+    low: { scale: 1.2, quality: 0.62 }
 };
 
 document.addEventListener('DOMContentLoaded', init);
