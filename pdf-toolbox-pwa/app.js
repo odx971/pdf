@@ -18,6 +18,96 @@ const COMPRESS_PRESETS = {
     low: { scale: 1.0, quality: 0.25 }
 };
 
+const QPDF_VERSION = '0.3.0';
+const QPDF_BASE = `https://unpkg.com/@neslinesli93/qpdf-wasm@${QPDF_VERSION}/dist/`;
+let qpdfPromise = null;
+
+function loadQpdfScript() {
+    if (window.Module && typeof window.Module === 'function') return Promise.resolve(window.Module);
+    const existing = document.querySelector(`script[data-qpdf]`);
+    if (existing) {
+        return new Promise((resolve, reject) => {
+            existing.addEventListener('load', () => resolve(window.Module), { once: true });
+            existing.addEventListener('error', () => reject(new Error('Could not load the decryption engine')), { once: true });
+        });
+    }
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = QPDF_BASE + 'qpdf.js';
+        script.dataset.qpdf = '1';
+        script.onload = () => resolve(window.Module);
+        script.onerror = () => reject(new Error('Could not load the decryption engine'));
+        document.head.appendChild(script);
+    });
+}
+
+function getQpdf() {
+    if (!qpdfPromise) {
+        qpdfPromise = (async () => {
+            const factory = await loadQpdfScript();
+            const mod = await factory({
+                locateFile: () => QPDF_BASE + 'qpdf.wasm',
+                noInitialRun: true
+            });
+            mod.printErr = () => {};
+            mod.print = () => {};
+            return mod;
+        })().catch(err => {
+            qpdfPromise = null;
+            throw err;
+        });
+    }
+    return qpdfPromise;
+}
+
+class QpdfError extends Error {
+    constructor(message, code) {
+        super(message);
+        this.code = code;
+    }
+}
+
+function qpdfRun(mod, args) {
+    try {
+        return mod.callMain(args);
+    } catch (err) {
+        return typeof err.status === 'number' ? err.status : 2;
+    }
+}
+
+async function qpdfDecrypt(bytes, password) {
+    const mod = await getQpdf();
+    const id = Math.random().toString(36).slice(2);
+    const inPath = `/in_${id}.pdf`;
+    const outPath = `/out_${id}.pdf`;
+
+    const cleanup = () => {
+        for (const p of [inPath, outPath]) {
+            try { mod.FS.unlink(p); } catch (e) {}
+        }
+    };
+
+    try {
+        mod.FS.writeFile(inPath, new Uint8Array(bytes));
+    } catch (err) {
+        cleanup();
+        throw new QpdfError('Could not read the file in memory', 'WRITE_FAILED');
+    }
+
+    const code = qpdfRun(mod, ['--password=' + password, '--decrypt', inPath, outPath]);
+    let out = null;
+    try { out = mod.FS.readFile(outPath); } catch (e) {}
+
+    if (code !== 0 || !out || out.length === 0) {
+        cleanup();
+        throw new QpdfError('qpdf exited with code ' + code, 'WRONG_PASSWORD');
+    }
+
+    const result = new Uint8Array(out);
+    cleanup();
+    return result;
+}
+
 document.addEventListener('DOMContentLoaded', init);
 
 function init() {
@@ -406,26 +496,31 @@ function setupUnlock() {
 async function loadUnlockPdf(file) {
     try {
         unlockPdfBytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(unlockPdfBytes, { ignoreEncryption: true });
 
         document.getElementById('unlockDropZone').classList.add('hidden');
         document.getElementById('unlockFileInfo').classList.remove('hidden');
         document.getElementById('unlockFileName').textContent = file.name;
 
         const statusEl = document.getElementById('unlockFileStatus');
+        const btn = document.getElementById('unlockBtn');
+
+        let isEncrypted = false;
         try {
-            await PDFDocument.load(unlockPdfBytes);
+            const probe = await PDFDocument.load(unlockPdfBytes, { ignoreEncryption: true });
+            isEncrypted = probe.isEncrypted === true;
+        } catch (err) {
+            showToast('Not a readable PDF: ' + err.message, 'error');
+            return;
+        }
+
+        if (isEncrypted) {
+            statusEl.textContent = 'Password protected';
+            statusEl.className = 'file-status locked';
+            btn.disabled = false;
+        } else {
             statusEl.textContent = 'Not encrypted';
             statusEl.className = 'file-status unlocked';
-        } catch (e) {
-            if (e.message.includes('password')) {
-                statusEl.textContent = 'Password protected';
-                statusEl.className = 'file-status locked';
-                document.getElementById('unlockBtn').disabled = false;
-            } else {
-                statusEl.textContent = 'Not encrypted';
-                statusEl.className = 'file-status unlocked';
-            }
+            btn.disabled = false;
         }
     } catch (err) {
         showToast('Error loading PDF: ' + err.message, 'error');
@@ -433,23 +528,30 @@ async function loadUnlockPdf(file) {
 }
 
 async function unlockPdf() {
-    const password = document.getElementById('unlockPassword').value;
-    if (!password) {
-        showToast('Please enter the password', 'warning');
+    if (!unlockPdfBytes) {
+        showToast('Choose a PDF first', 'warning');
         return;
     }
 
+    const password = document.getElementById('unlockPassword').value;
+    const btn = document.getElementById('unlockBtn');
+
+    btn.disabled = true;
     showLoading('Removing password...');
     try {
-        const pdfDoc = await PDFDocument.load(unlockPdfBytes, { password });
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        downloadBlob(blob, 'unlocked.pdf');
+        const decrypted = await qpdfDecrypt(unlockPdfBytes, password);
+        downloadBlob(new Blob([decrypted], { type: 'application/pdf' }), 'unlocked.pdf');
         showToast('Password removed successfully!', 'success');
     } catch (err) {
-        showToast('Wrong password or error: ' + err.message, 'error');
+        if (err && err.code === 'WRONG_PASSWORD') {
+            showToast('Wrong password', 'error');
+        } else {
+            showToast('Could not remove password: ' + (err && err.message ? err.message : err), 'error');
+        }
+    } finally {
+        btn.disabled = false;
+        hideLoading();
     }
-    hideLoading();
 }
 
 function setupPdf2Img() {

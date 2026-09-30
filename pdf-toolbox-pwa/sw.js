@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdf-toolbox-v2';
+const CACHE_NAME = 'pdf-toolbox-v3';
 const ASSETS = [
     '/',
     '/index.html',

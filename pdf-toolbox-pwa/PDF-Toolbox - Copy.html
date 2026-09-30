@@ -607,6 +607,60 @@ async function extractPages() {
 }
 
 /* ===== UNLOCK PDF ===== */
+var QPDF_BASE = 'https://unpkg.com/@neslinesli93/qpdf-wasm@0.3.0/dist/';
+var qpdfPromise = null;
+
+function loadQpdfScript() {
+  if (typeof Module === 'function') return Promise.resolve(Module);
+  var existing = document.querySelector('script[data-qpdf]');
+  if (existing) {
+    return new Promise(function(resolve, reject) {
+      existing.addEventListener('load', function() { resolve(Module); }, { once: true });
+      existing.addEventListener('error', function() { reject(new Error('Could not load the decryption engine')); }, { once: true });
+    });
+  }
+  return new Promise(function(resolve, reject) {
+    var script = document.createElement('script');
+    script.src = QPDF_BASE + 'qpdf.js';
+    script.setAttribute('data-qpdf', '1');
+    script.onload = function() { resolve(Module); };
+    script.onerror = function() { reject(new Error('Could not load the decryption engine')); };
+    document.head.appendChild(script);
+  });
+}
+
+function getQpdf() {
+  if (!qpdfPromise) {
+    qpdfPromise = (async function() {
+      var factory = await loadQpdfScript();
+      var mod = await factory({ locateFile: function() { return QPDF_BASE + 'qpdf.wasm'; }, noInitialRun: true });
+      mod.printErr = function() {};
+      mod.print = function() {};
+      return mod;
+    })().catch(function(err) { qpdfPromise = null; throw err; });
+  }
+  return qpdfPromise;
+}
+
+async function qpdfDecrypt(bytes, password) {
+  var mod = await getQpdf();
+  var id = Math.random().toString(36).slice(2);
+  var inPath = '/in_' + id + '.pdf';
+  var outPath = '/out_' + id + '.pdf';
+  function cleanup() { [inPath, outPath].forEach(function(p) { try { mod.FS.unlink(p); } catch (e) {} }); }
+  try { mod.FS.writeFile(inPath, new Uint8Array(bytes)); }
+  catch (e) { cleanup(); throw new Error('Could not read the file in memory'); }
+  var code;
+  try { code = mod.callMain(['--password=' + password, '--decrypt', inPath, outPath]); }
+  catch (e) { code = (e && typeof e.status === 'number') ? e.status : 2; }
+  var out = null;
+  try { out = mod.FS.readFile(outPath); } catch (e) {}
+  if (code !== 0 || !out || !out.length) { cleanup(); throw new Error('WRONG_PASSWORD'); }
+  var result = new Uint8Array(out);
+  cleanup();
+  return result;
+}
+
 function setupUnlock() {
   document.getElementById('fileUnlock').addEventListener('change', function(e) { if (e.target.files[0]) loadUnlockPdf(e.target.files[0]); e.target.value = ''; });
   document.getElementById('togglePass').addEventListener('click', function() {
@@ -623,29 +677,37 @@ async function loadUnlockPdf(file) {
     document.getElementById('infoUnlock').classList.remove('hidden');
     document.getElementById('nameUnlock').textContent = file.name;
     var st = document.getElementById('statusUnlock');
-    try {
-      await PDFDocument.load(unlockBytes);
-      st.textContent = 'Not encrypted';
-      st.className = 'st unlocked';
-    } catch (e) {
+    var btn = document.getElementById('btnUnlock');
+    var probe;
+    try { probe = await PDFDocument.load(unlockBytes, { ignoreEncryption: true }); }
+    catch (e) { showToast('Not a readable PDF: ' + e.message, 'error'); return; }
+    if (probe.isEncrypted) {
       st.textContent = 'Password protected';
       st.className = 'st locked';
-      document.getElementById('btnUnlock').disabled = false;
+    } else {
+      st.textContent = 'Not encrypted';
+      st.className = 'st unlocked';
     }
+    btn.disabled = false;
   } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function unlockPdf() {
+  if (!unlockBytes) { showToast('Choose a PDF first', 'warning'); return; }
   var pw = document.getElementById('passInput').value;
-  if (!pw) { showToast('Enter password', 'warning'); return; }
+  var btn = document.getElementById('btnUnlock');
+  btn.disabled = true;
   showLoading('Removing password...');
   try {
-    var doc = await PDFDocument.load(unlockBytes, { password: pw });
-    var blob = new Blob([await doc.save()], { type: 'application/pdf' });
+    var bytes = await qpdfDecrypt(unlockBytes, pw);
+    var blob = new Blob([bytes], { type: 'application/pdf' });
     setLastResult(blob, 'unlocked.pdf');
     downloadBlob(blob, 'unlocked.pdf');
     showToast('Password removed!', 'success');
-  } catch (e) { showToast('Wrong password', 'error'); }
+  } catch (e) {
+    showToast(e.message === 'WRONG_PASSWORD' ? 'Wrong password' : 'Could not remove password: ' + e.message, 'error');
+  }
+  btn.disabled = false;
   hideLoading();
 }
 
